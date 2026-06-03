@@ -39,8 +39,8 @@ def test_build_region_scores_returns_sorted_scores():
         {"region": "부산광역시", "facilities": 40},
     ]
     population = [
-        {"region": "서울특별시", "population": 9_400_000, "target_age_population": 2_300_000},
-        {"region": "부산광역시", "population": 3_300_000, "target_age_population": 700_000},
+        {"region": "서울특별시", "population": 9_400_000, "adult_population": 2_300_000},
+        {"region": "부산광역시", "population": 3_300_000, "adult_population": 700_000},
     ]
 
     scores = build_region_scores(attendance, facilities, population)
@@ -57,7 +57,7 @@ def test_aggregate_scores_filter_non_volleyball_attendance():
             {"region": "서울", "sport": "농구", "matches": 99, "spectators": 99999},
         ],
         facility_rows=[{"region": "서울", "facilities": 10}],
-        population_rows=[{"region": "서울", "population": 1000000, "target_age_population": 800000}],
+        population_rows=[{"region": "서울", "population": 1000000, "adult_population": 800000}],
     )
 
     seoul = next(row for row in scores if row["region"] == "서울특별시")
@@ -80,10 +80,10 @@ def test_assign_region_clusters_adds_actionable_labels():
             {"region": "제주", "facilities": 20},
         ],
         population_rows=[
-            {"region": "서울", "population": 9_400_000, "target_age_population": 2_300_000},
-            {"region": "부산", "population": 3_300_000, "target_age_population": 700_000},
-            {"region": "경기", "population": 13_600_000, "target_age_population": 3_400_000},
-            {"region": "제주", "population": 675_000, "target_age_population": 145_000},
+            {"region": "서울", "population": 9_400_000, "adult_population": 2_300_000},
+            {"region": "부산", "population": 3_300_000, "adult_population": 700_000},
+            {"region": "경기", "population": 13_600_000, "adult_population": 3_400_000},
+            {"region": "제주", "population": 675_000, "adult_population": 145_000},
         ],
     )
 

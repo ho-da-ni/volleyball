@@ -93,6 +93,7 @@ ATTENDANCE_OPTIONAL_ALIASES = {
     "season": ("season", "시즌", "연도"),
     "team": ("team", "구단", "팀"),
     "stadium": ("stadium", "경기장", "홈경기장"),
+    "spectator_basis": ("spectator_basis", "관람객수기준", "관중수기준"),
 }
 FACILITY_ALIASES = {
     "region": ("region", "지역", "시도", "광역자치단체", "sido"),
@@ -101,12 +102,12 @@ FACILITY_ALIASES = {
 POPULATION_ALIASES = {
     "region": ("region", "지역", "시도", "광역자치단체", "sido"),
     "population": ("population", "총인구", "인구", "population_total"),
-    "target_age_population": (
-        "target_age_population",
-        "타깃연령인구",
-        "청년학생인구",
-        "청년·학생층 인구",
-        "target_population",
+    "adult_population": (
+        "adult_population",
+        "성인인구",
+        "성인 인구",
+        "18세이상인구",
+        "18세 이상 인구",
     ),
 }
 
@@ -115,11 +116,11 @@ NUMERIC_OUTPUT_COLUMNS = (
     "spectators",
     "avg_spectators_per_match",
     "population",
-    "target_age_population",
+    "adult_population",
     "facilities",
     "spectator_rate",
     "facilities_per_100k",
-    "target_age_share",
+    "adult_share",
     "match_supply_per_100k",
     "demand_index",
     "infrastructure_index",
@@ -315,17 +316,17 @@ def aggregate_facilities(rows: Iterable[Mapping[str, object]]) -> dict[str, dict
 
 
 def aggregate_population(rows: Iterable[Mapping[str, object]]) -> dict[str, dict[str, float]]:
-    """Aggregate population and target-age population by region."""
+    """Aggregate total and adult population by region."""
 
     aggregated: dict[str, dict[str, float]] = defaultdict(
-        lambda: {"population": 0.0, "target_age_population": 0.0}
+        lambda: {"population": 0.0, "adult_population": 0.0}
     )
     for row in rows:
         region = standardize_region_name(row.get("region"))
         if not region:
             continue
         aggregated[region]["population"] += safe_float(row.get("population"))
-        aggregated[region]["target_age_population"] += safe_float(row.get("target_age_population"))
+        aggregated[region]["adult_population"] += safe_float(row.get("adult_population"))
     return dict(aggregated)
 
 
@@ -353,12 +354,12 @@ def build_region_scores(
             "spectators": attendance.get(region, {}).get("spectators", 0.0),
             "avg_spectators_per_match": attendance.get(region, {}).get("avg_spectators_per_match", 0.0),
             "population": population.get(region, {}).get("population", 0.0),
-            "target_age_population": population.get(region, {}).get("target_age_population", 0.0),
+            "adult_population": population.get(region, {}).get("adult_population", 0.0),
             "facilities": facilities.get(region, {}).get("facilities", 0.0),
         }
         row["spectator_rate"] = safe_divide(row["spectators"], row["population"], 100)
         row["facilities_per_100k"] = safe_divide(row["facilities"], row["population"], 100_000)
-        row["target_age_share"] = safe_divide(row["target_age_population"], row["population"], 100)
+        row["adult_share"] = safe_divide(row["adult_population"], row["population"], 100)
         row["match_supply_per_100k"] = safe_divide(row["matches"], row["population"], 100_000)
         rows.append(row)
 
@@ -372,7 +373,7 @@ def build_region_scores(
         "infrastructure_index",
         {"facilities": 0.5, "facilities_per_100k": 0.5},
     )
-    add_weighted_index(rows, "population_index", {"population": 0.6, "target_age_share": 0.4})
+    add_weighted_index(rows, "population_index", {"population": 0.6, "adult_share": 0.4})
 
     supply_scores = min_max_scale([float(row["match_supply_per_100k"]) for row in rows], reverse=True)
     for row, supply_gap_score in zip(rows, supply_scores, strict=True):
@@ -736,7 +737,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Calculate regional volleyball potential-demand scores.")
     parser.add_argument("--attendance", required=True, help="Local path or URL CSV with region, matches, spectators columns")
     parser.add_argument("--facilities", required=True, help="Local path or URL CSV with region and facilities columns")
-    parser.add_argument("--population", required=True, help="Local path or URL CSV with region, population, target_age_population columns")
+    parser.add_argument("--population", required=True, help="Local path or URL CSV with region, population, adult_population columns")
     parser.add_argument("--output", type=Path, required=True, help="Output score CSV path")
     parser.add_argument("--summary", type=Path, help="Optional output summary JSON path")
     parser.add_argument("--report", type=Path, help="Optional output Markdown report path")

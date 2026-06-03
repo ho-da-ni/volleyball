@@ -27,11 +27,13 @@ Python을 활용해 프로배구 관람 데이터와 지역별 인구·체육시
 
 | 파일 | 필수 컬럼 | 설명 |
 | --- | --- | --- |
-| 관람 데이터 | `region`, `matches`, `spectators` | 지역, 경기 수, 관람객 수. `sport`, `season`, `team`, `stadium` 컬럼이 있으면 배구/시즌/구단/경기장 정보를 함께 보존합니다. |
+| 관람 데이터 | `region`, `matches`, `spectators` | 지역, 경기 수, 관람객 수. 현재 공식 입력의 `spectators`는 평균 시즌 총관중이며, `sport`, `season`, `team`, `stadium`, `spectator_basis` 컬럼이 있으면 배구/시즌/구단/경기장/관람객 수 기준 정보를 함께 보존합니다. |
 | 체육시설 데이터 | `region`, `facilities` | 지역, 배구 가능 실내체육시설 수 |
-| 인구 데이터 | `region`, `population`, `target_age_population` | 지역, 총인구, 타깃 인구(`data/official`은 18세 이상 인구) |
+| 인구 데이터 | `region`, `population`, `adult_population` | 지역, 총인구, 성인 인구(`data/official`은 18세 이상 인구) |
 
 공식 출처 기반 데이터는 `data/official/`에 포함되어 있어 바로 실행해볼 수 있습니다.
+
+인구잠재력지수는 현재 `adult_population`(18세 이상 성인 인구) 기준입니다. 청년층·학생층 잠재력을 별도로 분석하려면 연령대별 인구 CSV를 추가하고 `adult_population` 대신 해당 연령대 컬럼을 사용하도록 지표를 조정해야 합니다.
 
 
 ## 공식 데이터 내려받기
@@ -78,7 +80,7 @@ python -m src.volleyball_demand_analysis \
 
 | 파일 | 기준 | 출처/산출 방식 |
 | --- | --- | --- |
-| `data/official/attendance.csv` | 2023 보고서, 최근 3년 평균 관중 수(2020~2022) | 한국프로스포츠협회 `2023 프로스포츠 관람객 성향조사` 프로배구 구단별 평균 관중 수를 연고 시도별로 합산 |
+| `data/official/attendance.csv` | 2023 보고서, 최근 3년 평균 시즌 총관중(2020~2022) | `spectators`는 구단별 시즌 총관중의 최근 3년 평균값이며, 분석 시 지역별로 합산한 뒤 `avg_spectators_per_match = spectators / matches`로 경기당 평균 관람객을 계산 |
 | `data/official/facilities.csv` | 2022년 | 문화체육관광부 `전국 공공체육시설 현황` 중 배구 가능 실내체육시설 기준 필터링 집계 |
 | `data/official/population.csv` | 2025년 12월 31일 | 행정안전부 주민등록 인구통계 시도별 총인구 및 18세 이상 인구 |
 
@@ -123,4 +125,4 @@ python -m src.volleyball_demand_analysis \
 
 ## 해석 시 주의사항
 
-`data/official/` 데이터는 공식 보고서와 공공 통계에 근거해 구성했습니다. 다만 관람 데이터는 한국프로스포츠협회 보고서의 2020~2022년 구단별 최근 3년 평균 관중 수를 연고 시도별로 합산한 값이고, 체육시설 데이터는 전체 공공체육시설이 아니라 배구 가능 실내체육시설 기준으로 필터링했습니다. 최신 원자료가 확보되면 같은 CSV 형식으로 교체해 재실행할 수 있습니다.
+`data/official/` 데이터는 공식 보고서와 공공 통계에 근거해 구성했습니다. 다만 관람 데이터는 한국프로스포츠협회 보고서의 2020~2022년 구단별 최근 3년 평균 시즌 총관중을 연고 시도별로 합산한 값이고, 체육시설 데이터는 전체 공공체육시설이 아니라 배구 가능 실내체육시설 기준으로 필터링했습니다. 최신 원자료가 확보되면 같은 CSV 형식으로 교체해 재실행할 수 있습니다.
