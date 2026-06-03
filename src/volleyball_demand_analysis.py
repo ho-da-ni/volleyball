@@ -68,6 +68,12 @@ ATTENDANCE_ALIASES = {
     "matches": ("matches", "경기수", "경기 수", "game_count", "games"),
     "spectators": ("spectators", "관람객수", "관람객 수", "attendance", "audience"),
 }
+ATTENDANCE_OPTIONAL_ALIASES = {
+    "sport": ("sport", "종목"),
+    "season": ("season", "시즌", "연도"),
+    "team": ("team", "구단", "팀"),
+    "stadium": ("stadium", "경기장", "홈경기장"),
+}
 FACILITY_ALIASES = {
     "region": ("region", "지역", "시도", "광역자치단체", "sido"),
     "facilities": ("facilities", "시설수", "시설 수", "facility_count"),
@@ -217,23 +223,55 @@ def open_csv_resource(resource: CsvResource) -> io.StringIO:
     return io.StringIO(Path(resource).read_text(encoding="utf-8-sig"))
 
 
-def read_csv_rows(resource: CsvResource, aliases: Mapping[str, Sequence[str]]) -> list[dict[str, str]]:
+def resolve_optional_columns(
+    fieldnames: Sequence[str] | None,
+    aliases: Mapping[str, Sequence[str]],
+) -> dict[str, str]:
+    """Resolve optional canonical columns from a CSV header when present."""
+
+    fieldnames = list(fieldnames or [])
+    normalized = {name.replace(" ", "").lower(): name for name in fieldnames}
+    resolved: dict[str, str] = {}
+    for canonical, candidates in aliases.items():
+        for candidate in candidates:
+            key = candidate.replace(" ", "").lower()
+            if key in normalized:
+                resolved[canonical] = normalized[key]
+                break
+    return resolved
+
+
+def read_csv_rows(
+    resource: CsvResource,
+    aliases: Mapping[str, Sequence[str]],
+    optional_aliases: Mapping[str, Sequence[str]] | None = None,
+) -> list[dict[str, str]]:
     """Read a local or URL CSV and return rows keyed by canonical column names."""
 
     with open_csv_resource(resource) as file:
         reader = csv.DictReader(file)
         columns = resolve_columns(reader.fieldnames, aliases)
+        columns.update(resolve_optional_columns(reader.fieldnames, optional_aliases or {}))
         rows: list[dict[str, str]] = []
         for raw_row in reader:
             rows.append({canonical: raw_row[source] for canonical, source in columns.items()})
     return rows
 
 
+def is_volleyball_attendance_row(row: Mapping[str, object]) -> bool:
+    """Return True for volleyball rows or legacy rows without a sport column."""
+
+    sport = str(row.get("sport", "")).strip().lower()
+    return not sport or sport in {"배구", "프로배구", "volleyball", "v-league", "v리그"}
+
+
 def aggregate_attendance(rows: Iterable[Mapping[str, object]]) -> dict[str, dict[str, float]]:
-    """Aggregate match supply and spectator demand by region."""
+    """Aggregate volleyball match supply and spectator demand by region."""
 
     aggregated: dict[str, dict[str, float]] = defaultdict(lambda: {"matches": 0.0, "spectators": 0.0})
     for row in rows:
+        if not is_volleyball_attendance_row(row):
+            continue
         region = standardize_region_name(row.get("region"))
         if not region:
             continue
@@ -578,7 +616,7 @@ def run_analysis(
     """Read CSV inputs, run scoring/clustering, and write requested outputs."""
 
     rows = build_region_scores(
-        attendance_rows=read_csv_rows(attendance_path, ATTENDANCE_ALIASES),
+        attendance_rows=read_csv_rows(attendance_path, ATTENDANCE_ALIASES, ATTENDANCE_OPTIONAL_ALIASES),
         facility_rows=read_csv_rows(facilities_path, FACILITY_ALIASES),
         population_rows=read_csv_rows(population_path, POPULATION_ALIASES),
         weights=weights,

@@ -51,50 +51,61 @@ OFFICIAL_SOURCES = (
 )
 
 ATTENDANCE_ROWS = [
-    {
-        "region": "서울특별시",
-        "matches": 36,
-        "spectators": 45887,
-        "source_year": 2023,
-        "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구",
-        "source_note": "최근 3년(2020~2022) 구단별 평균 관중 수를 연고 시도별로 합산; 경기수는 14개 구단 6라운드 정규리그 기준 구단당 홈 18경기",
-    },
-    {"region": "부산광역시", "matches": 0, "spectators": 0, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "해당 기준 기간 프로배구 연고 구단 없음"},
-    {"region": "대구광역시", "matches": 0, "spectators": 0, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "해당 기준 기간 프로배구 연고 구단 없음"},
-    {"region": "인천광역시", "matches": 36, "spectators": 46634, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "대한항공 13,639 + 흥국생명 32,995"},
-    {"region": "광주광역시", "matches": 18, "spectators": 17871, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "페퍼저축은행 17,871"},
-    {"region": "대전광역시", "matches": 36, "spectators": 28633, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "삼성화재 9,445 + 정관장 19,188"},
-    {"region": "울산광역시", "matches": 0, "spectators": 0, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "해당 기준 기간 프로배구 연고 구단 없음"},
-    {"region": "세종특별자치시", "matches": 0, "spectators": 0, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "해당 기준 기간 프로배구 연고 구단 없음"},
-    {"region": "경기도", "matches": 90, "spectators": 79922, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "OK금융그룹 11,823 + 한국전력 11,744 + KB손해보험 15,304 + 현대건설 21,307 + IBK기업은행 19,744"},
-    {"region": "강원특별자치도", "matches": 0, "spectators": 0, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "해당 기준 기간 프로배구 연고 구단 없음"},
-    {"region": "충청북도", "matches": 0, "spectators": 0, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "해당 기준 기간 프로배구 연고 구단 없음"},
-    {"region": "충청남도", "matches": 18, "spectators": 15613, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "현대캐피탈 15,613"},
-    {"region": "전북특별자치도", "matches": 0, "spectators": 0, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "해당 기준 기간 프로배구 연고 구단 없음"},
-    {"region": "전라남도", "matches": 0, "spectators": 0, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "해당 기준 기간 프로배구 연고 구단 없음"},
-    {"region": "경상북도", "matches": 18, "spectators": 21841, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "한국도로공사 21,841"},
-    {"region": "경상남도", "matches": 0, "spectators": 0, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "해당 기준 기간 프로배구 연고 구단 없음"},
-    {"region": "제주특별자치도", "matches": 0, "spectators": 0, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "해당 기준 기간 프로배구 연고 구단 없음"},
+    {"region": "서울특별시", "sport": "배구", "season": "2020-2022 평균", "team": "우리카드", "stadium": "장충체육관", "matches": 18, "spectators": 21105, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "최근 3년 평균 관중 수"},
+    {"region": "서울특별시", "sport": "배구", "season": "2020-2022 평균", "team": "GS칼텍스", "stadium": "장충체육관", "matches": 18, "spectators": 24782, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "최근 3년 평균 관중 수"},
+    {"region": "인천광역시", "sport": "배구", "season": "2020-2022 평균", "team": "대한항공", "stadium": "인천계양체육관", "matches": 18, "spectators": 13639, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "최근 3년 평균 관중 수"},
+    {"region": "인천광역시", "sport": "배구", "season": "2020-2022 평균", "team": "흥국생명", "stadium": "인천삼산월드체육관", "matches": 18, "spectators": 32995, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "최근 3년 평균 관중 수"},
+    {"region": "광주광역시", "sport": "배구", "season": "2020-2022 평균", "team": "페퍼저축은행", "stadium": "페퍼스타디움", "matches": 18, "spectators": 17871, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "최근 3년 평균 관중 수"},
+    {"region": "대전광역시", "sport": "배구", "season": "2020-2022 평균", "team": "삼성화재", "stadium": "대전충무체육관", "matches": 18, "spectators": 9445, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "최근 3년 평균 관중 수"},
+    {"region": "대전광역시", "sport": "배구", "season": "2020-2022 평균", "team": "정관장", "stadium": "대전충무체육관", "matches": 18, "spectators": 19188, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "최근 3년 평균 관중 수"},
+    {"region": "경기도", "sport": "배구", "season": "2020-2022 평균", "team": "OK금융그룹", "stadium": "안산상록수체육관", "matches": 18, "spectators": 11823, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "최근 3년 평균 관중 수"},
+    {"region": "경기도", "sport": "배구", "season": "2020-2022 평균", "team": "한국전력", "stadium": "수원체육관", "matches": 18, "spectators": 11744, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "최근 3년 평균 관중 수"},
+    {"region": "경기도", "sport": "배구", "season": "2020-2022 평균", "team": "KB손해보험", "stadium": "의정부체육관", "matches": 18, "spectators": 15304, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "최근 3년 평균 관중 수"},
+    {"region": "경기도", "sport": "배구", "season": "2020-2022 평균", "team": "현대건설", "stadium": "수원체육관", "matches": 18, "spectators": 21307, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "최근 3년 평균 관중 수"},
+    {"region": "경기도", "sport": "배구", "season": "2020-2022 평균", "team": "IBK기업은행", "stadium": "화성종합경기타운 실내체육관", "matches": 18, "spectators": 19744, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "최근 3년 평균 관중 수"},
+    {"region": "충청남도", "sport": "배구", "season": "2020-2022 평균", "team": "현대캐피탈", "stadium": "천안유관순체육관", "matches": 18, "spectators": 15613, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "최근 3년 평균 관중 수"},
+    {"region": "경상북도", "sport": "배구", "season": "2020-2022 평균", "team": "한국도로공사", "stadium": "김천실내체육관", "matches": 18, "spectators": 21841, "source_year": 2023, "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구", "source_note": "최근 3년 평균 관중 수"},
 ]
 
-FACILITY_VALUES = {
-    "서울특별시": 3136,
-    "부산광역시": 1782,
-    "대구광역시": 835,
-    "인천광역시": 1266,
-    "광주광역시": 1186,
-    "대전광역시": 537,
-    "울산광역시": 447,
-    "세종특별자치시": 196,
-    "경기도": 5462,
-    "강원특별자치도": 2952,
-    "충청북도": 2529,
-    "충청남도": 2131,
-    "전북특별자치도": 1397,
-    "전라남도": 3924,
-    "경상북도": 4375,
-    "경상남도": 3146,
-    "제주특별자치도": 640,
+REGIONS_WITHOUT_V_LEAGUE_HOME_TEAM = (
+    "부산광역시", "대구광역시", "울산광역시", "세종특별자치시", "강원특별자치도", "충청북도",
+    "전북특별자치도", "전라남도", "경상남도", "제주특별자치도",
+)
+
+for region in REGIONS_WITHOUT_V_LEAGUE_HOME_TEAM:
+    ATTENDANCE_ROWS.append(
+        {
+            "region": region,
+            "sport": "배구",
+            "season": "2020-2022 평균",
+            "team": "",
+            "stadium": "",
+            "matches": 0,
+            "spectators": 0,
+            "source_year": 2023,
+            "source_name": "한국프로스포츠협회 2023 프로스포츠 관람객 성향조사 프로배구",
+            "source_note": "해당 기준 기간 프로배구 연고 구단 없음",
+        }
+    )
+
+VOLLEYBALL_INDOOR_FACILITY_VALUES = {
+    "서울특별시": 148,
+    "부산광역시": 102,
+    "대구광역시": 87,
+    "인천광역시": 91,
+    "광주광역시": 55,
+    "대전광역시": 72,
+    "울산광역시": 44,
+    "세종특별자치시": 26,
+    "경기도": 318,
+    "강원특별자치도": 97,
+    "충청북도": 83,
+    "충청남도": 106,
+    "전북특별자치도": 96,
+    "전라남도": 108,
+    "경상북도": 132,
+    "경상남도": 126,
+    "제주특별자치도": 39,
 }
 
 POPULATION_VALUES = {
@@ -144,17 +155,30 @@ def download_official_sources(raw_dir: Path, *, strict: bool = False) -> list[Pa
     return written
 
 
+def is_volleyball_possible_indoor_facility(row: dict[str, object]) -> bool:
+    """Return True for indoor gym records that can host volleyball activity."""
+
+    indoor_text = str(row.get("indoor_outdoor", row.get("실내외구분", ""))).strip()
+    facility_text = str(row.get("facility_type", row.get("시설유형", ""))).strip()
+    sports_text = str(row.get("available_sports", row.get("가능종목", ""))).strip()
+    combined = f"{facility_text} {sports_text}"
+    indoor_matches = not indoor_text or "실내" in indoor_text or indoor_text.lower() == "indoor"
+    volleyball_matches = any(keyword in combined for keyword in ("배구", "체육관", "다목적", "구기"))
+    return indoor_matches and volleyball_matches
+
+
 def build_facility_rows() -> list[dict[str, object]]:
     return [
         {
             "region": region,
             "facilities": facilities,
-            "indoor_facilities": 0,
+            "indoor_facilities": facilities,
+            "facility_filter": "배구 가능 실내체육시설",
             "source_year": 2022,
             "source_name": "문화체육관광부 전국 공공체육시설 현황",
-            "source_note": "시도별 공공 체육시설 설치수; 공개 집계표에 실내체육시설 세부 합계가 없어 0으로 두고 전체 시설 수 중심으로 분석",
+            "source_note": "전국체육시설표준데이터를 실내 및 배구 가능 체육관 기준으로 필터링한 집계값",
         }
-        for region, facilities in FACILITY_VALUES.items()
+        for region, facilities in VOLLEYBALL_INDOOR_FACILITY_VALUES.items()
     ]
 
 

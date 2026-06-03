@@ -47,6 +47,21 @@ def test_build_region_scores_returns_sorted_scores():
     assert all(0 <= row["potential_demand_score"] <= 100 for row in scores)
 
 
+def test_aggregate_scores_filter_non_volleyball_attendance():
+    scores = build_region_scores(
+        attendance_rows=[
+            {"region": "서울", "sport": "배구", "matches": 2, "spectators": 1000},
+            {"region": "서울", "sport": "농구", "matches": 99, "spectators": 99999},
+        ],
+        facility_rows=[{"region": "서울", "facilities": 10, "indoor_facilities": 10}],
+        population_rows=[{"region": "서울", "population": 1000000, "target_age_population": 800000}],
+    )
+
+    seoul = next(row for row in scores if row["region"] == "서울특별시")
+    assert seoul["matches"] == 2
+    assert seoul["spectators"] == 1000
+
+
 def test_assign_region_clusters_adds_actionable_labels():
     rows = build_region_scores(
         attendance_rows=[
