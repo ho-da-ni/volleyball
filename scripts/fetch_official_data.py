@@ -172,7 +172,6 @@ def build_facility_rows() -> list[dict[str, object]]:
         {
             "region": region,
             "facilities": facilities,
-            "indoor_facilities": facilities,
             "facility_filter": "배구 가능 실내체육시설",
             "source_year": 2022,
             "source_name": "문화체육관광부 전국 공공체육시설 현황",

@@ -63,6 +63,26 @@ STANDARD_REGIONS = {
 
 REGION_ORDER = list(dict.fromkeys(STANDARD_REGIONS.values()))
 
+REGION_COORDINATES = {
+    "서울특별시": (37.5665, 126.9780),
+    "부산광역시": (35.1796, 129.0756),
+    "대구광역시": (35.8714, 128.6014),
+    "인천광역시": (37.4563, 126.7052),
+    "광주광역시": (35.1595, 126.8526),
+    "대전광역시": (36.3504, 127.3845),
+    "울산광역시": (35.5384, 129.3114),
+    "세종특별자치시": (36.4800, 127.2890),
+    "경기도": (37.4138, 127.5183),
+    "강원특별자치도": (37.8228, 128.1555),
+    "충청북도": (36.8000, 127.7000),
+    "충청남도": (36.5184, 126.8000),
+    "전북특별자치도": (35.7175, 127.1530),
+    "전라남도": (34.8679, 126.9910),
+    "경상북도": (36.4919, 128.8889),
+    "경상남도": (35.4606, 128.2132),
+    "제주특별자치도": (33.4996, 126.5312),
+}
+
 ATTENDANCE_ALIASES = {
     "region": ("region", "지역", "시도", "광역자치단체", "sido"),
     "matches": ("matches", "경기수", "경기 수", "game_count", "games"),
@@ -76,8 +96,7 @@ ATTENDANCE_OPTIONAL_ALIASES = {
 }
 FACILITY_ALIASES = {
     "region": ("region", "지역", "시도", "광역자치단체", "sido"),
-    "facilities": ("facilities", "시설수", "시설 수", "facility_count"),
-    "indoor_facilities": ("indoor_facilities", "실내체육시설수", "실내 시설 수", "indoor_count"),
+    "facilities": ("facilities", "시설수", "시설 수", "facility_count", "배구가능실내체육시설수"),
 }
 POPULATION_ALIASES = {
     "region": ("region", "지역", "시도", "광역자치단체", "sido"),
@@ -98,7 +117,6 @@ NUMERIC_OUTPUT_COLUMNS = (
     "population",
     "target_age_population",
     "facilities",
-    "indoor_facilities",
     "spectator_rate",
     "facilities_per_100k",
     "target_age_share",
@@ -133,6 +151,7 @@ class AnalysisOutputs:
     scores_csv: Path
     summary_json: Path | None
     report_md: Path | None
+    map_html: Path | None = None
 
 
 CsvResource = str | Path
@@ -286,15 +305,12 @@ def aggregate_attendance(rows: Iterable[Mapping[str, object]]) -> dict[str, dict
 def aggregate_facilities(rows: Iterable[Mapping[str, object]]) -> dict[str, dict[str, float]]:
     """Aggregate sports-facility counts by region."""
 
-    aggregated: dict[str, dict[str, float]] = defaultdict(
-        lambda: {"facilities": 0.0, "indoor_facilities": 0.0}
-    )
+    aggregated: dict[str, dict[str, float]] = defaultdict(lambda: {"facilities": 0.0})
     for row in rows:
         region = standardize_region_name(row.get("region"))
         if not region:
             continue
         aggregated[region]["facilities"] += safe_float(row.get("facilities"))
-        aggregated[region]["indoor_facilities"] += safe_float(row.get("indoor_facilities"))
     return dict(aggregated)
 
 
@@ -339,7 +355,6 @@ def build_region_scores(
             "population": population.get(region, {}).get("population", 0.0),
             "target_age_population": population.get(region, {}).get("target_age_population", 0.0),
             "facilities": facilities.get(region, {}).get("facilities", 0.0),
-            "indoor_facilities": facilities.get(region, {}).get("indoor_facilities", 0.0),
         }
         row["spectator_rate"] = safe_divide(row["spectators"], row["population"], 100)
         row["facilities_per_100k"] = safe_divide(row["facilities"], row["population"], 100_000)
@@ -355,7 +370,7 @@ def build_region_scores(
     add_weighted_index(
         rows,
         "infrastructure_index",
-        {"facilities": 0.4, "facilities_per_100k": 0.3, "indoor_facilities": 0.3},
+        {"facilities": 0.5, "facilities_per_100k": 0.5},
     )
     add_weighted_index(rows, "population_index", {"population": 0.6, "target_age_share": 0.4})
 
@@ -603,6 +618,89 @@ def write_markdown_report(rows: Sequence[Mapping[str, object]], summary: Mapping
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def score_color(score: float) -> str:
+    """Return a map marker color for a 0-100 potential-demand score."""
+
+    if score >= 70:
+        return "#b2182b"
+    if score >= 50:
+        return "#ef8a62"
+    if score >= 30:
+        return "#fddbc7"
+    return "#67a9cf"
+
+
+def score_radius(score: float) -> float:
+    """Return a Folium circle radius for a 0-100 potential-demand score."""
+
+    return 7 + max(0.0, min(score, 100.0)) / 5
+
+
+def write_folium_map(rows: Sequence[Mapping[str, object]], path: Path) -> None:
+    """Write an interactive Folium map for regional volleyball demand scores."""
+
+    try:
+        import folium
+    except ImportError as exc:
+        raise RuntimeError(
+            "Folium map output requires the 'folium' package. "
+            "Install dependencies with `python -m pip install -r requirements.txt`."
+        ) from exc
+
+    demand_map = folium.Map(location=[36.4, 127.8], zoom_start=7, tiles="CartoDB positron")
+    title_html = """
+    <div style="position: fixed; top: 16px; left: 50px; z-index: 9999;
+                background: white; padding: 10px 14px; border: 1px solid #999; border-radius: 4px;
+                font-size: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.25);">
+      <strong>프로배구 지역별 잠재수요 점수</strong><br>
+      원 크기·색상: potential_demand_score
+    </div>
+    """
+    demand_map.get_root().html.add_child(folium.Element(title_html))
+
+    for row in rows:
+        region = str(row.get("region", ""))
+        coordinates = REGION_COORDINATES.get(region)
+        if not coordinates:
+            continue
+        score = float(row.get("potential_demand_score", 0.0))
+        popup_html = (
+            f"<b>{region}</b><br>"
+            f"순위: {row.get('rank', '')}<br>"
+            f"잠재수요 점수: {score:.2f}<br>"
+            f"유형: {row.get('region_type', '미분류')}<br>"
+            f"경기 수: {float(row.get('matches', 0.0)):.0f}<br>"
+            f"관람객 수: {float(row.get('spectators', 0.0)):.0f}<br>"
+            f"배구 가능 실내체육시설: {float(row.get('facilities', 0.0)):.0f}"
+        )
+        folium.CircleMarker(
+            location=coordinates,
+            radius=score_radius(score),
+            color=score_color(score),
+            fill=True,
+            fill_color=score_color(score),
+            fill_opacity=0.72,
+            weight=2,
+            tooltip=f"{region}: {score:.2f}점",
+            popup=folium.Popup(popup_html, max_width=320),
+        ).add_to(demand_map)
+
+    legend_html = """
+    <div style="position: fixed; bottom: 24px; left: 50px; z-index: 9999;
+                background: white; padding: 10px 14px; border: 1px solid #999; border-radius: 4px;
+                font-size: 13px; box-shadow: 0 1px 4px rgba(0,0,0,0.25);">
+      <strong>점수 구간</strong><br>
+      <span style="color:#b2182b;">●</span> 70점 이상<br>
+      <span style="color:#ef8a62;">●</span> 50~69점<br>
+      <span style="color:#fddbc7;">●</span> 30~49점<br>
+      <span style="color:#67a9cf;">●</span> 30점 미만
+    </div>
+    """
+    demand_map.get_root().html.add_child(folium.Element(legend_html))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    demand_map.save(str(path))
+
+
 def run_analysis(
     attendance_path: CsvResource,
     facilities_path: CsvResource,
@@ -610,6 +708,7 @@ def run_analysis(
     output_path: Path,
     summary_path: Path | None = None,
     report_path: Path | None = None,
+    map_path: Path | None = None,
     cluster_count: int = 4,
     weights: IndicatorWeights | None = None,
 ) -> AnalysisOutputs:
@@ -628,17 +727,20 @@ def run_analysis(
         write_summary_json(summary, summary_path)
     if report_path:
         write_markdown_report(rows, summary, report_path)
-    return AnalysisOutputs(output_path, summary_path, report_path)
+    if map_path:
+        write_folium_map(rows, map_path)
+    return AnalysisOutputs(output_path, summary_path, report_path, map_path)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Calculate regional volleyball potential-demand scores.")
     parser.add_argument("--attendance", required=True, help="Local path or URL CSV with region, matches, spectators columns")
-    parser.add_argument("--facilities", required=True, help="Local path or URL CSV with region, facilities, indoor_facilities columns")
+    parser.add_argument("--facilities", required=True, help="Local path or URL CSV with region and facilities columns")
     parser.add_argument("--population", required=True, help="Local path or URL CSV with region, population, target_age_population columns")
     parser.add_argument("--output", type=Path, required=True, help="Output score CSV path")
     parser.add_argument("--summary", type=Path, help="Optional output summary JSON path")
     parser.add_argument("--report", type=Path, help="Optional output Markdown report path")
+    parser.add_argument("--map", type=Path, help="Optional output Folium HTML map path")
     parser.add_argument("--clusters", type=int, default=4, help="Number of K-means clusters to assign")
     return parser.parse_args()
 
@@ -652,6 +754,7 @@ def main() -> None:
         output_path=args.output,
         summary_path=args.summary,
         report_path=args.report,
+        map_path=args.map,
         cluster_count=args.clusters,
     )
 

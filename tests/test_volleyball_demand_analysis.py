@@ -1,4 +1,6 @@
 from pathlib import Path
+import sys
+import types
 
 import pytest
 
@@ -11,6 +13,7 @@ from src.volleyball_demand_analysis import (
     read_csv_rows,
     run_analysis,
     standardize_region_name,
+    write_folium_map,
 )
 
 
@@ -32,8 +35,8 @@ def test_build_region_scores_returns_sorted_scores():
         {"region": "부산", "matches": 1, "spectators": 2_000},
     ]
     facilities = [
-        {"region": "서울특별시", "facilities": 300, "indoor_facilities": 80},
-        {"region": "부산광역시", "facilities": 120, "indoor_facilities": 40},
+        {"region": "서울특별시", "facilities": 80},
+        {"region": "부산광역시", "facilities": 40},
     ]
     population = [
         {"region": "서울특별시", "population": 9_400_000, "target_age_population": 2_300_000},
@@ -53,7 +56,7 @@ def test_aggregate_scores_filter_non_volleyball_attendance():
             {"region": "서울", "sport": "배구", "matches": 2, "spectators": 1000},
             {"region": "서울", "sport": "농구", "matches": 99, "spectators": 99999},
         ],
-        facility_rows=[{"region": "서울", "facilities": 10, "indoor_facilities": 10}],
+        facility_rows=[{"region": "서울", "facilities": 10}],
         population_rows=[{"region": "서울", "population": 1000000, "target_age_population": 800000}],
     )
 
@@ -71,10 +74,10 @@ def test_assign_region_clusters_adds_actionable_labels():
             {"region": "제주", "matches": 0, "spectators": 0},
         ],
         facility_rows=[
-            {"region": "서울", "facilities": 300, "indoor_facilities": 80},
-            {"region": "부산", "facilities": 120, "indoor_facilities": 40},
-            {"region": "경기", "facilities": 500, "indoor_facilities": 140},
-            {"region": "제주", "facilities": 80, "indoor_facilities": 20},
+            {"region": "서울", "facilities": 80},
+            {"region": "부산", "facilities": 40},
+            {"region": "경기", "facilities": 140},
+            {"region": "제주", "facilities": 20},
         ],
         population_rows=[
             {"region": "서울", "population": 9_400_000, "target_age_population": 2_300_000},
@@ -109,6 +112,69 @@ def test_run_analysis_writes_csv_json_and_markdown(tmp_path: Path):
     assert report.exists()
     assert "potential_demand_score" in output.read_text(encoding="utf-8-sig")
     assert "상위 지역" in report.read_text(encoding="utf-8")
+
+
+def test_write_folium_map_uses_folium_and_writes_html(tmp_path: Path, monkeypatch):
+    class FakeHtml:
+        def __init__(self):
+            self.children = []
+
+        def add_child(self, child):
+            self.children.append(child)
+
+    class FakeRoot:
+        def __init__(self):
+            self.html = FakeHtml()
+
+    class FakeMap:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+            self.root = FakeRoot()
+            self.markers = []
+
+        def get_root(self):
+            return self.root
+
+        def save(self, path):
+            Path(path).write_text(
+                "<html><body>프로배구 지역별 잠재수요 점수</body></html>",
+                encoding="utf-8",
+            )
+
+    class FakeCircleMarker:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        def add_to(self, demand_map):
+            demand_map.markers.append(self)
+            return self
+
+    fake_folium = types.SimpleNamespace(
+        Map=FakeMap,
+        CircleMarker=FakeCircleMarker,
+        Popup=lambda html, max_width: {"html": html, "max_width": max_width},
+        Element=lambda html: html,
+    )
+    monkeypatch.setitem(sys.modules, "folium", fake_folium)
+
+    output = tmp_path / "volleyball_demand_map.html"
+    write_folium_map(
+        [
+            {
+                "rank": 1,
+                "region": "서울특별시",
+                "potential_demand_score": 58.5,
+                "region_type": "기존 흥행지역",
+                "matches": 36,
+                "spectators": 45887,
+                "facilities": 148,
+            }
+        ],
+        output,
+    )
+
+    assert output.exists()
+    assert "프로배구 지역별 잠재수요 점수" in output.read_text(encoding="utf-8")
 
 
 def test_read_csv_rows_accepts_korean_headers(tmp_path: Path):

@@ -13,6 +13,7 @@ def test_write_official_csvs_creates_analysis_inputs(tmp_path: Path):
     assert "sport,season,team,stadium" in attendance_text
     assert "우리카드" in attendance_text
     assert "배구 가능 실내체육시설" in facilities_text
+    assert "indoor_facilities" not in facilities_text
     assert "target_age_population" in (tmp_path / "population.csv").read_text(encoding="utf-8-sig")
 
 

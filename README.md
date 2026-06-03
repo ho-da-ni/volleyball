@@ -19,7 +19,7 @@ Python을 활용해 프로배구 관람 데이터와 지역별 인구·체육시
 - Min-Max Scaling 기반 관람수요지수, 체육인프라지수, 인구잠재력지수, 공급공백지수 계산
 - 가중합 방식의 최종 배구 관람 잠재수요 점수 계산
 - 표준 라이브러리 기반 K-means 군집분석과 지역 유형 라벨링
-- CSV 결과표, JSON 요약, Markdown 분석 리포트 출력
+- CSV 결과표, JSON 요약, Markdown 분석 리포트, Folium HTML 지도 출력
 
 ## 입력 데이터 형식
 
@@ -28,7 +28,7 @@ Python을 활용해 프로배구 관람 데이터와 지역별 인구·체육시
 | 파일 | 필수 컬럼 | 설명 |
 | --- | --- | --- |
 | 관람 데이터 | `region`, `matches`, `spectators` | 지역, 경기 수, 관람객 수. `sport`, `season`, `team`, `stadium` 컬럼이 있으면 배구/시즌/구단/경기장 정보를 함께 보존합니다. |
-| 체육시설 데이터 | `region`, `facilities`, `indoor_facilities` | 지역, 배구 가능 실내체육시설 수, 배구 가능 실내체육시설 수 |
+| 체육시설 데이터 | `region`, `facilities` | 지역, 배구 가능 실내체육시설 수 |
 | 인구 데이터 | `region`, `population`, `target_age_population` | 지역, 총인구, 타깃 인구(`data/official`은 18세 이상 인구) |
 
 공식 출처 기반 데이터는 `data/official/`에 포함되어 있어 바로 실행해볼 수 있습니다.
@@ -68,7 +68,8 @@ python -m src.volleyball_demand_analysis \
   --population "https://example.org/population.csv" \
   --output data/processed/region_scores.csv \
   --summary data/processed/summary.json \
-  --report data/processed/report.md
+  --report data/processed/report.md \
+  --map data/processed/volleyball_demand_map.html
 ```
 
 단, URL은 최종적으로 CSV 텍스트를 반환해야 합니다. 인증키가 필요한 공공데이터 API나 JSON/XML API는 CSV 다운로드 URL로 변환하거나, 별도 수집 스크립트에서 표준 CSV 컬럼(`region`, `matches`, `spectators` 등)으로 저장한 뒤 연결해야 합니다.
@@ -90,7 +91,8 @@ python -m src.volleyball_demand_analysis \
   --population data/official/population.csv \
   --output data/processed/region_scores.csv \
   --summary data/processed/summary.json \
-  --report data/processed/report.md
+  --report data/processed/report.md \
+  --map data/processed/volleyball_demand_map.html
 ```
 
 ## 주요 산출물
@@ -98,6 +100,7 @@ python -m src.volleyball_demand_analysis \
 - `region_scores.csv`: 지역별 최종 점수, 세부 지표, 군집, 추천 실행안
 - `summary.json`: 상위 지역과 유형별 지역 수 요약
 - `report.md`: 분석 결과를 바로 검토할 수 있는 Markdown 리포트
+- `volleyball_demand_map.html`: 지역별 잠재수요 점수 지도
 
 ## 프로젝트 구조
 
