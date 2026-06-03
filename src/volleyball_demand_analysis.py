@@ -1,9 +1,11 @@
 """Run a regional potential-demand analysis for professional volleyball.
 
-The module intentionally uses only the Python standard library so the analysis
-can run in restricted environments.  It accepts three CSV inputs, aggregates the
-inputs to the 17-province level, calculates weighted demand indicators, assigns
-K-means based region types, and writes CSV/JSON/Markdown outputs.
+The core scoring pipeline uses the Python standard library so CSV/JSON/Markdown
+outputs can run in restricted environments.  Folium is an optional dependency
+used only when rendering the interactive HTML map.  The module accepts three CSV
+inputs, aggregates them to the 17-province level, calculates weighted demand
+indicators, assigns K-means based region types, and can write CSV, JSON,
+Markdown, and Folium HTML map outputs.
 """
 
 from __future__ import annotations
