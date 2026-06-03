@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import io
 import json
 import math
 from collections import defaultdict
@@ -17,6 +18,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from statistics import mean
 from typing import Iterable, Mapping, Sequence
+from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 STANDARD_REGIONS = {
     "서울": "서울특별시",
@@ -126,6 +129,9 @@ class AnalysisOutputs:
     report_md: Path | None
 
 
+CsvResource = str | Path
+
+
 def standardize_region_name(value: object) -> str:
     """Return a standard 17-province region name."""
 
@@ -192,10 +198,29 @@ def resolve_columns(fieldnames: Sequence[str] | None, aliases: Mapping[str, Sequ
     return resolved
 
 
-def read_csv_rows(path: Path, aliases: Mapping[str, Sequence[str]]) -> list[dict[str, str]]:
-    """Read a CSV and return rows keyed by canonical column names."""
+def is_url(resource: CsvResource) -> bool:
+    """Return True when a CSV resource is an HTTP(S) URL."""
 
-    with path.open("r", encoding="utf-8-sig", newline="") as file:
+    parsed = urlparse(str(resource))
+    return parsed.scheme in {"http", "https"}
+
+
+def open_csv_resource(resource: CsvResource) -> io.StringIO:
+    """Open a local path or HTTP(S) URL as UTF-8 CSV text."""
+
+    if is_url(resource):
+        request = Request(str(resource), headers={"User-Agent": "volleyball-demand-analysis/1.0"})
+        with urlopen(request, timeout=30) as response:
+            charset = response.headers.get_content_charset() or "utf-8-sig"
+            return io.StringIO(response.read().decode(charset))
+
+    return io.StringIO(Path(resource).read_text(encoding="utf-8-sig"))
+
+
+def read_csv_rows(resource: CsvResource, aliases: Mapping[str, Sequence[str]]) -> list[dict[str, str]]:
+    """Read a local or URL CSV and return rows keyed by canonical column names."""
+
+    with open_csv_resource(resource) as file:
         reader = csv.DictReader(file)
         columns = resolve_columns(reader.fieldnames, aliases)
         rows: list[dict[str, str]] = []
@@ -541,9 +566,9 @@ def write_markdown_report(rows: Sequence[Mapping[str, object]], summary: Mapping
 
 
 def run_analysis(
-    attendance_path: Path,
-    facilities_path: Path,
-    population_path: Path,
+    attendance_path: CsvResource,
+    facilities_path: CsvResource,
+    population_path: CsvResource,
     output_path: Path,
     summary_path: Path | None = None,
     report_path: Path | None = None,
@@ -570,9 +595,9 @@ def run_analysis(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Calculate regional volleyball potential-demand scores.")
-    parser.add_argument("--attendance", type=Path, required=True, help="CSV with region, matches, spectators columns")
-    parser.add_argument("--facilities", type=Path, required=True, help="CSV with region, facilities, indoor_facilities columns")
-    parser.add_argument("--population", type=Path, required=True, help="CSV with region, population, target_age_population columns")
+    parser.add_argument("--attendance", required=True, help="Local path or URL CSV with region, matches, spectators columns")
+    parser.add_argument("--facilities", required=True, help="Local path or URL CSV with region, facilities, indoor_facilities columns")
+    parser.add_argument("--population", required=True, help="Local path or URL CSV with region, population, target_age_population columns")
     parser.add_argument("--output", type=Path, required=True, help="Output score CSV path")
     parser.add_argument("--summary", type=Path, help="Optional output summary JSON path")
     parser.add_argument("--report", type=Path, help="Optional output Markdown report path")

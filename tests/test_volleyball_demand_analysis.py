@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+import src.volleyball_demand_analysis as vda
 from src.volleyball_demand_analysis import (
     IndicatorWeights,
     assign_region_clusters,
@@ -80,9 +81,9 @@ def test_run_analysis_writes_csv_json_and_markdown(tmp_path: Path):
     report = tmp_path / "report.md"
 
     run_analysis(
-        attendance_path=Path("data/sample/attendance.csv"),
-        facilities_path=Path("data/sample/facilities.csv"),
-        population_path=Path("data/sample/population.csv"),
+        attendance_path=Path("data/official/attendance.csv"),
+        facilities_path=Path("data/official/facilities.csv"),
+        population_path=Path("data/official/population.csv"),
         output_path=output,
         summary_path=summary,
         report_path=report,
@@ -108,6 +109,47 @@ def test_read_csv_rows_accepts_korean_headers(tmp_path: Path):
         },
     )
 
+    assert rows == [{"region": "서울", "matches": "2", "spectators": "1000"}]
+
+
+def test_read_csv_rows_accepts_url_resources(monkeypatch):
+    class FakeHeaders:
+        @staticmethod
+        def get_content_charset():
+            return "utf-8"
+
+    class FakeResponse:
+        headers = FakeHeaders()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        @staticmethod
+        def read():
+            return "지역,경기수,관람객수\n서울,2,1000\n".encode("utf-8")
+
+    captured = {}
+
+    def fake_urlopen(request, timeout):
+        captured["url"] = request.full_url
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr(vda, "urlopen", fake_urlopen)
+
+    rows = read_csv_rows(
+        "https://example.com/attendance.csv",
+        {
+            "region": ("region", "지역"),
+            "matches": ("matches", "경기수"),
+            "spectators": ("spectators", "관람객수"),
+        },
+    )
+
+    assert captured == {"url": "https://example.com/attendance.csv", "timeout": 30}
     assert rows == [{"region": "서울", "matches": "2", "spectators": "1000"}]
 
 
